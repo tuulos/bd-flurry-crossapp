@@ -24,7 +24,7 @@ for profile in profiles():
 avg /= float(len(data))
     
 data.sort(key=lambda r: sum(r), reverse=True)
-data = data[:3000]
+data = data[:1000]
 
 Text(size=(12,2),
      data={'head': "Session activity over the first 60 minutes",
