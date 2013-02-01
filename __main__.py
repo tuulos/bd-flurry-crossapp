@@ -12,6 +12,7 @@ class Matrix(Widget):
     defaults = {'size': [3,3]}
 
 data = []
+avg = 0
 for profile in profiles():
     row = [0] * MINUTES
     for session in profile['sessions']:
@@ -19,7 +20,9 @@ for profile in profiles():
            col = min(MINUTES - 1, event['o'] / 60000)
            row[col] = min(row[col] + 0.1, 1.0)
     data.append(row)
-
+    avg += sum(1 for x in row if x > 0)
+avg /= float(len(data))
+    
 data.sort(key=lambda r: sum(r), reverse=True)
 data = data[:3000]
 
@@ -31,5 +34,5 @@ Matrix(size=[12,12],
        color=2,
        data=data)
 
-Title('Retention')
-Description('Active segments: **9 / 32 / 234**')
+Title('Session activity')
+Description('Average session length is %.2f minutes' % avg)
