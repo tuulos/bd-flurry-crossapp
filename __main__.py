@@ -1,51 +1,38 @@
-from bitdeli.widgets import Title, Description, set_theme
-from bitdeli.chain import Profiles
-from collections import Counter
 
-set_theme('sail')
+from bitdeli import profiles
+from bitdeli.widgets import Widget, Text, Title, Description, set_theme
+from itertools import imap, chain
+from datetime import datetime 
 
-text = {}
+set_theme('purple')
 
-def stats(profiles):
-    stats = Counter()
-    apps = Counter()
-    for profile in profiles:
-        for session in profile['sessions']:
-            apps[session['$app']] += 1
-            for event in session['l']:
-                stats[event['e']] += 1
-                
-    top_apps = apps.most_common()
-    top_events = stats.most_common()
-    text['applist'] = '\n'.join(' - **%s**: %d sessions' % app
-                                for app in top_apps)
-    text['total'] = total = float(sum(stats.itervalues()))
-    text['top'] = top_events[0][0]
-    
-    yield {'type': 'text',
-           'size': (12, 2),
-           'label': 'Top Application',
-           'color': 2,
-           'head': top_apps[0][0]}
-    
-    yield {'type': 'text',
-           'size': (4, 2),
-           'label': 'Total Number of Events (All Apps)',
-           'head': int(total)}
-    
-    yield {'type': 'table',
-           'size': (12, 5),
-           'label': 'Events',
-           'chart': {'Percent': 'bar'},
-           'data': [{'Event': event,
-                     'Count': count,
-                     'Percent': count / total}
-                    for event, count in top_events]}
+DAYS = 100
 
-Profiles().map(stats).show()
+class Matrix(Widget):
+    defaults = {'size': [3,3]}
 
-Title("The most common event is *{top}*", text)
+def day(session):
+    return datetime.utcfromtimestamp(session['t'] / 1000.).toordinal()
 
-Description("Currently tracking the following applications:\n\n"
-            "{applist}", text)    
+data = []
+for profile in profiles():
+    days = frozenset(imap(day, profile['sessions']))
+    first = min(days)
+    row = [0] * DAYS
+    for i in range(DAYS):
+        if i + first in days:
+            row[i] = 1
+        data.append(row)
 
+data.sort(key=lambda r: sum(r), reverse=True)
+data = data[:3000]
+
+Text(size=(2,2),
+     data={'head': len(data)})
+
+Matrix(size=[12,12],
+       color=2,
+       data=data)
+
+Title('Retention')
+Description('Active segments: **9 / 32 / 234**')
